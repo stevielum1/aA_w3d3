@@ -32,5 +32,26 @@ class ShortenedUrl < ApplicationRecord
   foreign_key: :user_id,
   class_name: :User
   
+  has_many :visits,
+  primary_key: :id,
+  foreign_key: :short_id,
+  class_name: :Visit
+  
+  has_many :visitors,
+  -> { distinct },
+  through: :visits,
+  source: :user
+  
+  def num_clicks
+    self.visits.length
+  end
+  
+  def num_uniques
+    self.visitors.count
+  end
+  
+  def num_recent_uniques
+    self.visitors.where('visits.created_at > ?', 10.minutes.ago).count 
+  end
   
 end
