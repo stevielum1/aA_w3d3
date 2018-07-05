@@ -12,6 +12,7 @@ class ShortenedUrl < ApplicationRecord
   include SecureRandom
   
   validates :short_url, presence: true, uniqueness: true
+  validate :no_spamming
   
   def self.random_code
     short_url = SecureRandom.urlsafe_base64(12)
@@ -62,4 +63,16 @@ class ShortenedUrl < ApplicationRecord
   has_many :tag_topics,
   through: :taggings,
   source: :tag_topic
+  
+  private
+  def no_spamming
+    url_count = ShortenedUrl.select('*')
+      .where('created_at > ? AND user_id = ?', 1.minutes.ago, self.user_id)
+      .count
+      
+    if url_count > 5
+      errors[:user_id] << "is spamming"
+      raise "STOP SPAMMING!"
+    end
+  end
 end
